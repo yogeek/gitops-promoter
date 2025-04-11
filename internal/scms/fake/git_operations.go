@@ -31,6 +31,17 @@ func (gh GitAuthenticationProvider) GetGitHttpsRepoUrl(gitRepo v1alpha1.GitRepos
 	return fmt.Sprintf("http://localhost:%s/%s/%s", gitServerPortStr, gitRepo.Spec.Fake.Owner, gitRepo.Spec.Fake.Name)
 }
 
+// Add support for SSH in the Fake provider.
+func (gh GitAuthenticationProvider) GetGitRepoUrl(gitRepository v1alpha1.GitRepository) string {
+	if gh.scmProvider.Spec.Protocol == "SSH" {
+		if gh.scmProvider.Spec.Fake != nil && gh.scmProvider.Spec.Fake.Domain != "" {
+			return fmt.Sprintf("git@%s:%s/%s.git", gitServerPortStr, gitRepo.Spec.Fake.Owner, gitRepo.Spec.Fake.Name)
+		}
+		return fmt.Sprintf("git@localhost:%s/%s.git", gitServerPortStr, gitRepo.Spec.Fake.Owner, gitRepo.Spec.Fake.Name)
+	}
+	return gh.GetGitHttpsRepoUrl(gitRepository)
+}
+
 func (gh GitAuthenticationProvider) GetToken(ctx context.Context) (string, error) {
 	return "", nil
 }

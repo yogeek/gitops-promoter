@@ -17,6 +17,18 @@ type GitAuthenticationProvider struct {
 }
 
 func NewGitlabGitAuthenticationProvider(scmProvider *v1alpha1.ScmProvider, secret *v1.Secret) (*GitAuthenticationProvider, error) {
+	if scmProvider.Spec.Protocol == "SSH" {
+		sshKey := string(secret.Data["sshPrivateKey"])
+		if sshKey == "" {
+			return nil, fmt.Errorf("SSH protocol selected but secret %q is missing 'sshPrivateKey'", secret.Name)
+		}
+		// Configure SSH client (example placeholder, actual implementation may vary)
+		// This assumes an SSH client setup function exists
+		if err := ConfigureSSHClient(sshKey); err != nil {
+			return nil, fmt.Errorf("failed to configure SSH client: %w", err)
+		}
+	}
+
 	client, err := GetClient(*secret, scmProvider.Spec.GitLab.Domain)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create GitLab Client: %w", err)
@@ -40,6 +52,13 @@ func (gl GitAuthenticationProvider) GetGitHttpsRepoUrl(repo v1alpha1.GitReposito
 		return ""
 	}
 	return repoUrl
+}
+
+func (gl GitAuthenticationProvider) GetGitRepoUrl(repo v1alpha1.GitRepository) string {
+	if gl.scmProvider.Spec.Protocol == "SSH" {
+		return fmt.Sprintf("git@%s:%s/%s.git", gl.scmProvider.Spec.GitLab.Domain, repo.Spec.GitLab.Namespace, repo.Spec.GitLab.Name)
+	}
+	return gl.GetGitHttpsRepoUrl(repo)
 }
 
 func (gl GitAuthenticationProvider) GetToken(ctx context.Context) (string, error) {

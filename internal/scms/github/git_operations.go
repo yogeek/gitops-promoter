@@ -54,6 +54,17 @@ func (gh GitAuthenticationProvider) GetGitHttpsRepoUrl(gitRepository v1alpha1.Gi
 	return fmt.Sprintf("https://git@github.com/%s/%s.git", gitRepository.Spec.GitHub.Owner, gitRepository.Spec.GitHub.Name)
 }
 
+// Add support for SSH in the GitHub provider.
+func (gh GitAuthenticationProvider) GetGitRepoUrl(gitRepository v1alpha1.GitRepository) string {
+	if gh.scmProvider.Spec.Protocol == "SSH" {
+		if gh.scmProvider.Spec.GitHub != nil && gh.scmProvider.Spec.GitHub.Domain != "" {
+			return fmt.Sprintf("git@%s:%s/%s.git", gh.scmProvider.Spec.GitHub.Domain, gitRepository.Spec.GitHub.Owner, gitRepository.Spec.GitHub.Name)
+		}
+		return fmt.Sprintf("git@github.com:%s/%s.git", gitRepository.Spec.GitHub.Owner, gitRepository.Spec.GitHub.Name)
+	}
+	return gh.GetGitHttpsRepoUrl(gitRepository)
+}
+
 func (gh GitAuthenticationProvider) GetToken(ctx context.Context) (string, error) {
 	token, err := gh.transport.Token(ctx)
 	if err != nil {

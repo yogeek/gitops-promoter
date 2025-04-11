@@ -40,6 +40,12 @@ type ScmProviderSpec struct {
 
 	// Fake required configuration for Fake as the SCM provider
 	Fake *Fake `json:"fake,omitempty"`
+
+	// Protocol specifies the protocol to use for cloning (HTTP or SSH)
+	Protocol string `json:"protocol,omitempty"`
+
+	// SSHKeySecretRef contains the SSH private key required for SSH protocol
+	SSHKeySecretRef *v1.LocalObjectReference `json:"sshKeySecretRef,omitempty"`
 }
 
 // ScmProviderStatus defines the observed state of ScmProvider
